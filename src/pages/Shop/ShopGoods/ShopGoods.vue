@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="goods">
-      <div class="menu-wrapper" ref="menuWrapper">
+      <div class="menu-wrapper" >
         <ul>
           <!-- :class="{current: index===currentIndex}"     控制右边滑动，左边对应上  用计算属性去 实现-->
           <li class="menu-item " v-for="(good,index) in goods" :key="index"
@@ -18,12 +18,14 @@
           </li>
         </ul>
       </div>
-      <div class="foods-wrapper" ref="foodsWrapper">
+      <div class="foods-wrapper" >
         <ul ref="foodsUl">
-          <li class="food-list-hook" v-for="(good,index) in goods" :key="index" >
+          <li class="food-list-hook" v-for="(good,index) in goods" 
+          :key="index">
             <h1 class="title">{{good.name}}</h1>
             <ul>
-              <li class="food-item bottom-border-1px" v-for="(food,index) in good.foods" :key="index">
+              <li class="food-item bottom-border-1px" v-for="(food,index) in good.foods" 
+              :key="index" @click="showFood(food)">
                 <div class="icon">
                   <img
                     width="57"
@@ -42,19 +44,26 @@
                     <span class="now">￥{{food.price}}</span>
                     <span class="old" v-if="food.oldPrice">￥{{food.oldPrice}}</span>
                   </div>
-                  <div class="cartcontrol-wrapper">CartControl</div>
+                  <div class="cartcontrol-wrapper">
+                    <CartControl :food="food"/>
+                  </div>
                 </div>
               </li>
             </ul>
           </li>
         </ul>
       </div>
+      <ShopCart/>
     </div>
+    <Food :food="food" ref="food" />
   </div>
 </template>
 <script>
 import {mapState} from 'vuex'
 import BScroll from 'better-scroll'
+import CartControl from '../../../components/CartControl/CartControl.vue'
+import Food from '../../../components/Food/Food.vue'
+import ShopCart from '../../../components/ShopCart/ShopCart.vue'
 
 export default {
   data(){
@@ -62,6 +71,7 @@ export default {
       scrollY:0,  
       tops:[],
       probeType:'',
+      food:{} 
     }
   },
   //这里的回掉函数是为了显示new BScroll ，避免异步。callback的作用，actions中也要传callback
@@ -74,6 +84,11 @@ export default {
 
     })
   },
+  components:{
+    CartControl,
+    Food,
+    ShopCart,
+  },
   computed: {
     ...mapState(['goods']),
 
@@ -84,7 +99,7 @@ export default {
         // 根据条件计算产生一个结果
         const index = tops.findIndex((top, index) => {
           // scrollY>=当前top && scrollY<下一个top
-          return scrollY >= top && scrollY < tops[index + 1]
+        return scrollY >= top && scrollY < tops[index + 1]
         })
         // 返回结果
         return index
@@ -97,18 +112,18 @@ export default {
           new BScroll('.menu-wrapper',{
              click: true
           })
-          const foodsScroll = new BScroll('.foods-wrapper',{
+          this.foodsScroll = new BScroll('.foods-wrapper',{
                probeType: 3,
                click: true
           })
           //绑定监听，on方法看文档使用
-          foodsScroll.on('scroll',({x,y})=>{
+          this.foodsScroll.on('scroll',({x,y})=>{
            console.log('x,y',x,y)
            this.scrollY = Math.abs(y)
           })
           
           //绑定监听滚动结束，on方法看文档使用
-          foodsScroll.on('scrollEnd',({x,y})=>{
+          this.foodsScroll.on('scrollEnd',({x,y})=>{
            console.log('scrollEnd',x,y)
            this.scrollY = Math.abs(y)
           })
@@ -145,6 +160,14 @@ export default {
       // 平滑滑动右侧列表
       this.foodsScroll.scrollTo(0, -scrollY, 300)
     },
+
+    // 显示点击的food
+    showFood (food) {
+      // 设置food
+      this.food = food
+      // 显示food组件 (在父组件中调用子组件对象的方法)
+      this.$refs.food.toggleShow()
+    }
   }
 
 }
